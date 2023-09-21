@@ -1,6 +1,6 @@
 <?php
 
-class NeonCPT {
+class NEONCPT {
 	protected $post_type_id;
 	protected $slug;
 	protected $args = [];
@@ -30,7 +30,7 @@ class NeonCPT {
 			'new_item'              => 'New ' . $this->args['title'],
 			'edit_item'             => 'Edit ' . $this->args['title'],
 			'view_item'             => 'View ' . $this->args['title'],
-			'all_items'             => 'All ' . $this->args['title'],
+			'all_items'             => ! isset($this->args['show_in_menu']) || $this->args['show_in_menu'] === true ? 'All ' . $this->args['title'] : $this->args['title'],
 			'search_items'          => 'Search ' . $this->args['title'],
 			'parent_item_colon'     => 'Parent ' . $this->args['title'],
 			'not_found'             => 'No ' . $this->args['title'] . ' found.',
@@ -60,8 +60,8 @@ class NeonCPT {
 				'labels'              => $labels,
 				'public'              => true,
 				'publicly_queryable'  => $disable_in_front_page,
-				'show_ui'             => ! isset($this->args['show_in_menu']) ? true : $this->args['show_in_menu'],
-				'show_in_menu'        => true,
+				'show_ui'             => true,
+				'show_in_menu'        => ! isset($this->args['show_in_menu']) ? true : $this->args['show_in_menu'],
 				'show_in_admin_bar'   => $disable_in_front_page,
 				'query_var'           => true,
 				'rewrite'             => array( 'slug' => $this->slug ),
