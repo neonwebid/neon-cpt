@@ -13,6 +13,8 @@ class NEONCPT {
 		$this->slug         = apply_filters( "{$args['id']}_rewrite_slug", $slug );
 
 		add_action( 'init', [ $this, '_register' ] );
+
+		$this->customColumnsInit();
 	}
 
 	public function getSlug() {
@@ -30,7 +32,7 @@ class NEONCPT {
 			'new_item'              => 'New ' . $this->args['title'],
 			'edit_item'             => 'Edit ' . $this->args['title'],
 			'view_item'             => 'View ' . $this->args['title'],
-			'all_items'             => ! isset($this->args['show_in_menu']) || $this->args['show_in_menu'] === true ? 'All ' . $this->args['title'] : $this->args['title'],
+			'all_items'             => ! isset( $this->args['show_in_menu'] ) || $this->args['show_in_menu'] === true ? 'All ' . $this->args['title'] : $this->args['title'],
 			'search_items'          => 'Search ' . $this->args['title'],
 			'parent_item_colon'     => 'Parent ' . $this->args['title'],
 			'not_found'             => 'No ' . $this->args['title'] . ' found.',
@@ -61,7 +63,7 @@ class NEONCPT {
 				'public'              => true,
 				'publicly_queryable'  => $disable_in_front_page,
 				'show_ui'             => true,
-				'show_in_menu'        => ! isset($this->args['show_in_menu']) ? true : $this->args['show_in_menu'],
+				'show_in_menu'        => ! isset( $this->args['show_in_menu'] ) ? true : $this->args['show_in_menu'],
 				'show_in_admin_bar'   => $disable_in_front_page,
 				'query_var'           => true,
 				'rewrite'             => array( 'slug' => $this->slug ),
@@ -113,6 +115,96 @@ class NEONCPT {
 
 	protected function getId() {
 		return $this->post_type_id;
+	}
+
+	public function customColumnsInit() {
+		add_filter( "manage_{$this->post_type_id}_posts_columns", [ $this, 'setColumNames' ] );
+		add_action( "manage_{$this->post_type_id}_posts_custom_column", [ $this, 'setColumnValue' ], 10, 2 );
+		add_filter( "manage_edit-{$this->post_type_id}_sortable_columns", [ $this, 'setSortableColumns' ] );
+		add_action( 'pre_get_posts', [ $this, 'setCustomSortableQuery' ] );
+	}
+
+	public function setColumNames( $columns ) {
+		if ( ! empty( $this->args['unset_columns'] ) ) {
+			foreach ( $this->args['unset_columns'] as $unset_column ) {
+				unset( $columns[ $unset_column ] );
+			}
+		}
+
+		if ( ! empty( $this->args['columns'] ) ) {
+
+			foreach ( $this->args['columns'] as $column_id => $column ) {
+
+				$next_column = '';
+
+				if ( ! empty( $column['before'] ) && ! empty( $columns[ $column['before'] ] ) ) {
+					$next_column = $columns[ $column['before'] ];
+					unset( $columns[ $column['before'] ] );
+				}
+
+				$columns[ $column_id ] = $column['title'];
+
+				if ( ! empty( $next_column ) ) {
+					$columns[ $column['before'] ] = $next_column;
+				}
+
+			}
+		}
+
+		return $columns;
+	}
+
+	public function setColumnValue( $column, $post_id ) {
+		if ( ! empty( $this->args['columns'] ) ) {
+			foreach ( $this->args['columns'] as $column_id => $column_item ) {
+				if ( $column_id == $column ) {
+					if ( is_callable( $column_item['value'] ) ) {
+						echo call_user_func( $column_item['value'], $post_id );
+					} else {
+						echo get_post_meta( $post_id, $column_item['value'], true );
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	public function setSortableColumns( $sortable_columns ) {
+		if ( ! empty( $this->args['columns'] ) ) {
+			foreach ( $this->args['columns'] as $column_id => $column ) {
+				if ( $column['sort_by'] ) {
+					$sortable_columns[ $column_id ] = $column['sort_by'];
+				}
+			}
+		}
+
+		if ( ! empty( $this->args['group'] ) ) {
+			foreach ( $this->args['group'] as $group ) {
+				if ( ! empty( $group['sortable'] ) ) {
+					$sortable_columns["taxonomy-{$group['id']}"] = $group['id'];
+				}
+			}
+		}
+
+		return $sortable_columns;
+	}
+
+	public function setCustomSortableQuery( $query ) {
+		if ( ! is_admin() || ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( $query->get( 'post_type' ) == $this->post_type_id ) {
+
+			$orderby = $query->get( 'orderby' );
+
+			if ( ! empty( $this->args['columns'][ $orderby ]['sort_type'] ) ) {
+				$sort_type = $this->args['columns'][ $orderby ]['sort_type'];
+				$query->set( 'meta_key', $orderby );
+				$query->set( 'orderby', $sort_type !== 'number' ? 'meta_value' : 'meta_value_num' );
+			}
+
+		}
 	}
 
 }
