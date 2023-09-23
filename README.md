@@ -23,8 +23,8 @@ class CustomerMenu extends NEONCPT {
 			'menu_icon'          => 'dashicons-id-alt',
 			'show_in_rest'       => false,
 			'has_archive'        => true,
-      'hierarchical'       => false,
-      'show_in_menu'       => true,
+		        'hierarchical'       => false,
+		        'show_in_menu'       => true,
 			'publicly_queryable' => true,
 			'group'              => [
 				[
@@ -37,6 +37,18 @@ class CustomerMenu extends NEONCPT {
 					'title'             => 'Business Category',
 					'show_admin_column' => true,
 				],
+			],
+			'columns' => [
+				'column_id' => [
+					'title' => 'Column Title',
+					'value' => 'meta_key',
+					'sort_by' => 'meta_key',
+					'sort_type' => 'number',
+					'before' => 'date'
+				]
+			],
+			'unset_columns' => [
+
 			]
 		] );
 	}
@@ -125,12 +137,14 @@ if ( ! function_exists( 'neon_current_tax' ) ) {
 **Cara Menggunakan**
 pastikan function khusus diletakan di loop atau single
 
+```php
+<?php neon_current_tax('customer-label', '<div class="customer-label"><span>Customer Labels</span>', '</div>'); ?>
 ```
-<?ph neon_current_tax('customer-label', '<div class="customer-label"><span>Customer Labels</span>', '</div>'); ?>
-```
+
 atau
-```
-<?ph neon_current_tax('customer-label'); ?>
+
+```php
+<?php neon_current_tax('customer-label'); ?>
 ```
 
 ## Need Helps
